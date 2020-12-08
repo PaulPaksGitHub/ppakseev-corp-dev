@@ -1,18 +1,21 @@
-import React, {useState} from 'react';
-import { Grid, Typography, Card, CardContent, Box, Button, TextField } from '@material-ui/core';
-import http from '../core/http';
+import * as React from 'react';
+import {useState} from 'react';
+import {Box, Button, Card, CardContent, Grid, TextField, Typography} from '@material-ui/core';
+import NotesStore from "../core/stores/NotesStore";
+import {INote} from "../core/stores/interfaces/INote";
 
-const NoteItem = props => {
+interface IProps extends INote {
+
+}
+
+const NoteItem: React.FunctionComponent<IProps> = props => {
   const [isEditing, setIsEditing] = useState(false);
   const [displayedText, setDisplayedText] = useState(props.text || "");
 
   const onPressDeleteNote = () => {
     const wannaDelete = confirm("Вы уверены, что хотите удалить заметку?");
     if (wannaDelete) {
-      http.delete(`note-delete?id=${props.id}`)
-        .then(() => {
-          props.onNoteDeleted && props.onNoteDeleted();
-        })
+      NotesStore.deleteNote(props);
     }
   }
 
@@ -22,12 +25,10 @@ const NoteItem = props => {
 
   const onPressSubmitEditing = () => {
     setIsEditing(false);
-    http.put('note-edit', {
+    NotesStore.editNote({
       id: props.id,
       text: displayedText,
-    }).then(response => {
-      props.onNodeEdited && props.onNodeEdited(response.data);
-    })
+    });
   }
 
   const onPressCloseEditing = () => {

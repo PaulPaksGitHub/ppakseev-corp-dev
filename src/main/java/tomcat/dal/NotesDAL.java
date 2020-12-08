@@ -12,14 +12,16 @@ import java.sql.ResultSet;
 
 import tomcat.utils.H2JDBC;
 import tomcat.utils.H2JDBCInstance;
-import tomcat.dao.NoteDAO;
+import tomcat.dto.NoteDTO;
 
+import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+@Service
 public class NotesDAL {
-  private NoteDAO parseNoteFromResultSet(ResultSet resultSet) throws SQLException{
-    NoteDAO note = new NoteDAO();
-    note.id = resultSet.getInt("id");
-    note.text = resultSet.getString("text");
-    return note;
+  private NoteDTO parseNoteFromResultSet(ResultSet resultSet) throws SQLException{
+    return new NoteDTO(resultSet.getInt("id"), resultSet.getString("text"));
   }
 
   private Integer getNextNoteID() throws SQLException{
@@ -38,13 +40,13 @@ public class NotesDAL {
     return id;
   }
 
-  public NoteDAO getNote(Integer id) throws SQLException{
+  public NoteDTO getNote(Integer id) throws SQLException{
     Connection connection = H2JDBC.getInstance().getConnection();
     PreparedStatement statement = connection.prepareStatement("select * from notes where id = ?");
     statement.setInt(1, id);
     ResultSet resultSet = statement.executeQuery();
 
-    NoteDAO note = new NoteDAO();
+    NoteDTO note = new NoteDTO();
 
     if (resultSet.next()) {
       note = this.parseNoteFromResultSet(resultSet);
@@ -54,7 +56,7 @@ public class NotesDAL {
     return note;
   }
   
-  public NoteDAO createNote(String text) throws SQLException {
+  public NoteDTO createNote(String text) throws SQLException {
     Connection connection = H2JDBC.getInstance().getConnection();
     Integer nextNoteID = this.getNextNoteID();
 
@@ -67,11 +69,11 @@ public class NotesDAL {
     return this.getNote(nextNoteID);
   }
 
-  public ArrayList<NoteDAO> getNotes() throws SQLException {
+  public ArrayList<NoteDTO> getNotes() throws SQLException {
     Connection connection = H2JDBC.getInstance().getConnection();
     Statement statement = connection.createStatement();
     ResultSet resultSet = statement.executeQuery("select * from notes");
-    ArrayList<NoteDAO> notes = new ArrayList();
+    ArrayList<NoteDTO> notes = new ArrayList();
     
     while (resultSet.next()) {
       notes.add(this.parseNoteFromResultSet(resultSet));
@@ -90,10 +92,9 @@ public class NotesDAL {
     return true;
   }
 
-  public NoteDAO editNote(NoteDAO editedNote) throws SQLException {
+  public NoteDTO editNote(NoteDTO editedNote) throws SQLException {
     Connection connection = H2JDBC.getInstance().getConnection();
     PreparedStatement statement = connection.prepareStatement("update notes set text = ? where id = ?");
-
 
     statement.setString(1, editedNote.text);
     statement.setInt(2, editedNote.id);

@@ -9,7 +9,7 @@ module.exports = {
     filename: '../src/main/resources/static/bundle.js'
   },
   resolve: {
-    extensions: ['.js', '.jsx']
+    extensions: [ '.tsx', '.ts', '.js', '.jsx']
   },
   module: {
     rules: [
@@ -22,7 +22,12 @@ module.exports = {
             presets: ["@babel/preset-env", "@babel/preset-react"]
           }
         }]
-      }
+      },
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
     ]
   },
   devServer: {

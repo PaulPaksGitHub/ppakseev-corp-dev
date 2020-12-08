@@ -1,9 +1,9 @@
 package tomcat.controllers;
 
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.stereotype.Controller;
 
-@RestController
+@Controller
 public class IndexPageController {
   @RequestMapping("/")
   public String getIndexPage(){

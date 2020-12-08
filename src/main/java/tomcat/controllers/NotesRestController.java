@@ -1,7 +1,4 @@
-package com.example.springboot;
-
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
+package tomcat.controllers;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,42 +11,48 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import tomcat.dal.NotesDAL;
-import tomcat.dao.NoteDAO;
+import tomcat.dto.NoteDTO;
 
 class CreateBody {
   public String text;
 }
 
-@CrossOrigin
 @RestController
 @RequestMapping("/api")
 public class NotesRestController {
+  @Autowired
+  private NotesDAL notesModel;
+
 	@GetMapping("/notes")
-	public ArrayList<NoteDAO> getNotes() throws SQLException {
-		return new NotesDAL().getNotes();
+	public ArrayList<NoteDTO> getNotes() throws SQLException {
+		return this.notesModel.getNotes();
 	}
 
   @GetMapping("/note")
-  public NoteDAO getNote(@RequestParam(value = "id") Integer id) throws SQLException {
-    return new NotesDAL().getNote(id);
+  public NoteDTO getNote(@RequestParam(value = "id") Integer id) throws SQLException {
+    return this.notesModel.getNote(id);
   }
   
-  @PostMapping("/note-create")
-  public NoteDAO createNote(@RequestBody CreateBody body) throws SQLException {
-    return new NotesDAL().createNote(body.text);
+  @PostMapping("/note")
+  public NoteDTO createNote(@RequestBody CreateBody body) throws SQLException {
+    return this.notesModel.createNote(body.text);
   }
   
   
-  @DeleteMapping("/note-delete")
-  public boolean deleteNote(@RequestParam(value = "id") Integer id) throws SQLException {
-    return new NotesDAL().deleteNote(id);
+  @DeleteMapping("/note/{id}")
+  public boolean deleteNote(@PathVariable(value = "id") Integer id) throws SQLException {
+    return this.notesModel.deleteNote(id);
   }
 
-  @PutMapping("/note-edit")
-  public NoteDAO editNote(@RequestBody NoteDAO editedNote) throws SQLException {
-    return new NotesDAL().editNote(editedNote);
+  @PutMapping("/note/{id}")
+  public NoteDTO editNote(@PathVariable(value = "id") Integer id, @RequestBody CreateBody body) throws SQLException {
+    return this.notesModel.editNote(new NoteDTO(id, body.text));
   }
 }
 
