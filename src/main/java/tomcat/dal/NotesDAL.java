@@ -10,8 +10,6 @@ import java.util.List;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 
-import tomcat.utils.H2JDBC;
-import tomcat.utils.H2JDBCInstance;
 import tomcat.dao.NoteDAO;
 import tomcat.dto.NoteDTO;
 
