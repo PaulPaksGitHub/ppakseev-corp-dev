@@ -19,14 +19,14 @@ public class H2JDBCInstance {
   }
 
   H2JDBCInstance(){
-   try { 
-      Class.forName(JDBC_DRIVER);
-      System.out.println("Connecting to database...");
-      this.conn = DriverManager.getConnection(DB_URL,USER,PASS);
-   } catch(SQLException se) { 
-      se.printStackTrace(); 
-   } catch(Exception e) { 
-      e.printStackTrace(); 
-   }
+   // try { 
+   //    Class.forName(JDBC_DRIVER);
+   //    System.out.println("Connecting to database...");
+   //    this.conn = DriverManager.getConnection(DB_URL,USER,PASS);
+   // } catch(SQLException se) { 
+   //    se.printStackTrace(); 
+   // } catch(Exception e) { 
+   //    e.printStackTrace(); 
+   // }
   }
 }

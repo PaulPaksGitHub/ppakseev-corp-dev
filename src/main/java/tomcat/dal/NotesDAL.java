@@ -12,95 +12,99 @@ import java.sql.ResultSet;
 
 import tomcat.utils.H2JDBC;
 import tomcat.utils.H2JDBCInstance;
+import tomcat.dao.NoteDAO;
 import tomcat.dto.NoteDTO;
 
 import org.springframework.stereotype.Service;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.hibernate.*;
+import java.math.BigInteger;
+import java.lang.System;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 
 @Service
 public class NotesDAL {
+  @Autowired
+  private SessionFactory sessionFactory;
+
   private NoteDTO parseNoteFromResultSet(ResultSet resultSet) throws SQLException{
     return new NoteDTO(resultSet.getInt("id"), resultSet.getString("text"));
   }
 
   private Integer getNextNoteID() throws SQLException{
-    Connection conn = H2JDBC.getInstance().getConnection();
-
-    Statement idStmt = conn.createStatement();
-    ResultSet idResuilt = idStmt.executeQuery("select notes_id_seq.nextval");
-
-    Integer id = null;
-
-    if (idResuilt.next()) {
-      id = idResuilt.getInt(1);
-    }
-
-    idStmt.close();
-    return id;
+    return ((BigInteger) this.sessionFactory.getCurrentSession()
+    .createSQLQuery("select notes_id_seq.nextval").uniqueResult())
+    .intValue();
   }
 
-  public NoteDTO getNote(Integer id) throws SQLException{
-    Connection connection = H2JDBC.getInstance().getConnection();
-    PreparedStatement statement = connection.prepareStatement("select * from notes where id = ?");
-    statement.setInt(1, id);
-    ResultSet resultSet = statement.executeQuery();
-
-    NoteDTO note = new NoteDTO();
-
-    if (resultSet.next()) {
-      note = this.parseNoteFromResultSet(resultSet);
-    }
-
-    statement.close();
-    return note;
+  public NoteDAO getNote(Integer id) throws SQLException{
+    return this.sessionFactory.getCurrentSession().get(NoteDAO.class, id);
   }
   
-  public NoteDTO createNote(String text) throws SQLException {
-    Connection connection = H2JDBC.getInstance().getConnection();
+  public NoteDAO createNote(String text) throws SQLException {
     Integer nextNoteID = this.getNextNoteID();
+    Session session = this.sessionFactory.openSession();
+    Transaction tx = null;
 
-    PreparedStatement statement = connection.prepareStatement("insert into notes values (?, ?)");
-    statement.setInt(1, nextNoteID);
-    statement.setString(2, text);
-    statement.execute();
-    statement.close();
+    try {
+        tx = session.beginTransaction();
+        session.save(new NoteDAO(nextNoteID, text));
+        tx.commit();
+    }
+    catch (RuntimeException e) {
+        tx.rollback();
+    }
+    finally {
+        session.close();
+    }
 
     return this.getNote(nextNoteID);
   }
 
-  public ArrayList<NoteDTO> getNotes() throws SQLException {
-    Connection connection = H2JDBC.getInstance().getConnection();
-    Statement statement = connection.createStatement();
-    ResultSet resultSet = statement.executeQuery("select * from notes");
-    ArrayList<NoteDTO> notes = new ArrayList();
-    
-    while (resultSet.next()) {
-      notes.add(this.parseNoteFromResultSet(resultSet));
-    }
-
-    statement.close();
-    return notes;
+  public List<NoteDAO> getNotes() throws SQLException {
+    CriteriaBuilder criteriaBuilder = this.sessionFactory.getCriteriaBuilder();
+    CriteriaQuery<NoteDAO> criteriaQuery = criteriaBuilder.createQuery(NoteDAO.class);
+    criteriaQuery.from(NoteDAO.class);
+    return this.sessionFactory.getCurrentSession().createQuery(criteriaQuery).list();
   }
 
   public boolean deleteNote(Integer id) throws SQLException {
-    Connection connection = H2JDBC.getInstance().getConnection();
-    PreparedStatement statement = connection.prepareStatement("delete from notes where id = ?");
-    statement.setInt(1, id);
-    statement.execute();
-    statement.close();
+    Session session = this.sessionFactory.openSession();
+    Transaction tx = null;
+    try {
+        tx = session.beginTransaction();
+        session.delete(this.getNote(id));
+        tx.commit();
+    }
+    catch (RuntimeException e) {
+        tx.rollback();
+    }
+    finally {
+        session.close();
+    }
     return true;
   }
 
-  public NoteDTO editNote(NoteDTO editedNote) throws SQLException {
-    Connection connection = H2JDBC.getInstance().getConnection();
-    PreparedStatement statement = connection.prepareStatement("update notes set text = ? where id = ?");
+  public NoteDAO editNote(NoteDAO editedNote) throws SQLException {
+    Session session = this.sessionFactory.openSession();
+    Transaction tx = null;
+    try {
+        tx = session.beginTransaction();
+        session.merge(new NoteDAO(editedNote.getId(), editedNote.getText()));
+        tx.commit();
+    }
+    catch (RuntimeException e) {
+        tx.rollback();
+    }
+    finally {
+        session.close();
+    }
 
-    statement.setString(1, editedNote.text);
-    statement.setInt(2, editedNote.id);
-    statement.execute();
-    statement.close();
-
-    return this.getNote(editedNote.id);
+    return new NoteDAO(editedNote.getId(), editedNote.getText());
   }
 }
