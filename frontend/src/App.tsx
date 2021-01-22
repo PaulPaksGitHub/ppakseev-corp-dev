@@ -5,40 +5,25 @@ import { Container, Grid, Typography } from '@material-ui/core';
 import { useDataStream } from './core/hooks/useBehaviorSubject';
 import NotesStore from './core/stores/NotesStore';
 import {useEffect} from "react";
+import RegisterPage from "./pages/RegisterPage/RegisterPage";
+import NotesPage from "./pages/NotesPage/NotesPage";
+import {Route} from "./core/modules/Navigation";
+import LoginPage from "./pages/LoginPage/LoginPage";
 
 const App = () => {
-  const notes = useDataStream(NotesStore.notesStream);
-
-  const requestNotes = () => {
-    NotesStore.requestNotes();
-  }
-
-  useEffect(() => {
-    requestNotes();
-  }, []);
-
-  return <Container maxWidth={"md"}>
-    <AddNoteForm />
-
-    <Grid
-      container
-      direction="row"
-      justify="center"
-      alignItems="center"
-      spacing={2}
-    >
-      {notes.data && notes.data.length > 0 ? notes.data.map((noteItem, index) => (
-        <NoteItem
-          {...noteItem}
-          key={`${index}${noteItem.id}`}
-        />
-      )) : (
-        <Typography>
-          Список пуст, создайте новую заметку
-        </Typography>
-      )}
-    </Grid>
-  </Container>
+  return (
+      <div>
+        <Route exact path={"/"}>
+          <RegisterPage />
+        </Route>
+        <Route path={"/login"}>
+          <LoginPage />
+        </Route>
+        <Route path={"/notes"}>
+          <NotesPage />
+        </Route>
+      </div>
+  )
 }
 
 export default App;

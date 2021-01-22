@@ -1,23 +1,18 @@
 package tomcat.controllers;
 
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.*;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import tomcat.dal.NotesDAL;
-import tomcat.dao.NoteDAO;
+import tomcat.dal.*;
+import tomcat.dao.*;
+import tomcat.dto.*;
 
 class CreateBody {
   public String text;
@@ -28,31 +23,68 @@ class CreateBody {
 public class NotesRestController {
   @Autowired
   private NotesDAL notesModel;
+  @Autowired
+  private UsersModel usersModel;
 
 	@GetMapping("/notes")
-	public List<NoteDAO> getNotes() throws SQLException {
-		return this.notesModel.getNotes();
-	}
-
-  @GetMapping("/note")
-  public NoteDAO getNote(@RequestParam(value = "id") Integer id) throws SQLException {
-    return this.notesModel.getNote(id);
+	public ResponseEntity getNotes(@RequestHeader("access-token") String accessToken) throws SQLException {
+    TokensDAO tokens = this.usersModel.getTokensByAccess(accessToken);
+    if (tokens != null && tokens.isAccessTokenAlive()) {
+      return new ResponseEntity<List<NoteDAO>>(this.notesModel.getNotes(tokens.getUser_id()), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+    }
   }
   
+	@GetMapping("/shared-notes")
+	public ResponseEntity getSharedNotes(@RequestHeader("access-token") String accessToken) throws SQLException {
+    TokensDAO tokens = this.usersModel.getTokensByAccess(accessToken);
+    if (tokens != null && tokens.isAccessTokenAlive()) {
+      return new ResponseEntity<List<NoteDAO>>(this.notesModel.getMySharedNotes(tokens.getUser_id()), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+    }
+	}
+  
   @PostMapping("/note")
-  public NoteDAO createNote(@RequestBody CreateBody body) throws SQLException {
-    return this.notesModel.createNote(body.text);
+  public ResponseEntity createNote(@RequestHeader("access-token") String accessToken,@RequestBody CreateBody body) throws SQLException {
+    TokensDAO tokens = this.usersModel.getTokensByAccess(accessToken);
+    if (tokens != null && tokens.isAccessTokenAlive()) {
+      return new ResponseEntity<NoteDAO>(this.notesModel.createNote(tokens.getUser_id(), body.text), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+    }
   }
   
   
   @DeleteMapping("/note/{id}")
-  public boolean deleteNote(@PathVariable(value = "id") Integer id) throws SQLException {
-    return this.notesModel.deleteNote(id);
+  public ResponseEntity deleteNote(@RequestHeader("access-token") String accessToken,@PathVariable(value = "id") Integer id) throws SQLException {
+    TokensDAO tokens = this.usersModel.getTokensByAccess(accessToken);
+    if (tokens != null && tokens.isAccessTokenAlive()) {
+      return new ResponseEntity<Boolean>(this.notesModel.deleteNote(tokens.getUser_id(), id), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+    }
   }
 
   @PutMapping("/note/{id}")
-  public NoteDAO editNote(@PathVariable(value = "id") Integer id, @RequestBody CreateBody body) throws SQLException {
-    return this.notesModel.editNote(new NoteDAO(id, body.text));
+  public ResponseEntity editNote(@RequestHeader("access-token") String accessToken,@PathVariable(value = "id") Integer id, @RequestBody CreateBody body) throws SQLException {
+    TokensDAO tokens = this.usersModel.getTokensByAccess(accessToken);
+    if (tokens != null && tokens.isAccessTokenAlive()) {
+      return new ResponseEntity<NoteDAO>(this.notesModel.editNote(tokens.getUser_id(), new NoteDAO(id, body.text, tokens.getUser_id())), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+    }
+  }
+
+  @PostMapping("note-share")
+  public ResponseEntity shareNote(@RequestHeader("access-token") String accessToken,@RequestBody NoteShareForm body) throws SQLException {
+    TokensDAO tokens = this.usersModel.getTokensByAccess(accessToken);
+    if (tokens != null && tokens.isAccessTokenAlive()) {
+      return new ResponseEntity<SharedNoteDAO>(this.notesModel.shareNote(tokens.getUser_id(), body), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<String>("Unauthorized", HttpStatus.UNAUTHORIZED);
+    }
   }
 }
 

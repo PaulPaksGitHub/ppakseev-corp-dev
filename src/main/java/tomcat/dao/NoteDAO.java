@@ -18,6 +18,18 @@ public class NoteDAO {
   @Field
   private String text;
 
+  @Field
+  private Integer owner_id;
+
+	public Integer getOwner_id() {
+		return this.owner_id;
+	}
+
+	public void setOwner_id(Integer owner_id) {
+		this.owner_id = owner_id;
+	}
+
+
   public Integer getId() {
     return id;
   }
@@ -36,8 +48,9 @@ public class NoteDAO {
 
   public NoteDAO(){}
   
-  public NoteDAO(Integer id, String text) {
+  public NoteDAO(Integer id, String text, Integer owner_id) {
     this.id = id;
     this.text = text;
+    this.owner_id = owner_id;
   }
 }

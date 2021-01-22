@@ -11,6 +11,7 @@ interface IProps extends INote {
 const NoteItem: React.FunctionComponent<IProps> = props => {
   const [isEditing, setIsEditing] = useState(false);
   const [displayedText, setDisplayedText] = useState(props.text || "");
+  const [receiverUserID, setReceiverUserID] = useState("");
 
   const onPressDeleteNote = () => {
     const wannaDelete = confirm("Вы уверены, что хотите удалить заметку?");
@@ -36,6 +37,10 @@ const NoteItem: React.FunctionComponent<IProps> = props => {
     setDisplayedText(props.text);
   }
 
+  const onPressShare = () => {
+    NotesStore.share(props.id, parseInt(receiverUserID, 10));
+  }
+
   return (
     <Grid item xs={6}>
       <Card>
@@ -44,21 +49,29 @@ const NoteItem: React.FunctionComponent<IProps> = props => {
             <>
               <TextField multiline id="standard-basic" label="Редактировать" value={displayedText} onChange={e => {
                 setDisplayedText(e.target.value)
-              }} />
+              }}/>
               <Box py={1} flexDirection="row">
-                <Button onClick={onPressSubmitEditing} color="primary" disabled={displayedText.trim().length === 0}>Сохранить</Button>
+                <Button onClick={onPressSubmitEditing} color="primary"
+                        disabled={displayedText.trim().length === 0}>Сохранить</Button>
                 <Button onClick={onPressCloseEditing} color="secondary">Отменить</Button>
               </Box>
             </>
           ) : (
-              <>
-                <Typography>{displayedText}</Typography>
-                <Box py={1} flexDirection="row">
-                  <Button onClick={onPressEditNote} color="primary">Редактировать</Button>
-                  <Button onClick={onPressDeleteNote} color="secondary">Удалить</Button>
+            <>
+              <Typography>{displayedText}</Typography>
+              <Box py={1} flexDirection="row">
+                <Button onClick={onPressEditNote} color="primary">Редактировать</Button>
+                <Button onClick={onPressDeleteNote} color="secondary">Удалить</Button>
+                <Box py={1}>
+                  <TextField id="standard-basic" label="Номер пользователя для отравки" value={receiverUserID}
+                             onChange={e => {
+                               setReceiverUserID(e.target.value)
+                             }}/>
+                  <Button onClick={onPressShare} color="primary">Поделиться</Button>
                 </Box>
-              </>
-            )}
+              </Box>
+            </>
+          )}
         </CardContent>
       </Card>
     </Grid>
